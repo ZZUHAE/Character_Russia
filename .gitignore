@@ -1,0 +1,11 @@
+# Claude Code 세션 상태 (진행 히스토리와 무관)
+.omc/
+
+# Obsidian UI 상태 (자주 바뀌어 노이즈) — 설정(graph/app/core-plugins)은 추적함
+.obsidian/workspace.json
+.obsidian/workspace-mobile.json
+.obsidian/cache
+
+# OS
+Thumbs.db
+.DS_Store
