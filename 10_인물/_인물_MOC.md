@@ -38,3 +38,4 @@ TABLE status, file.frontmatter.aliases as "별칭" FROM "10_인물" WHERE type =
 
 **일본**
 - [[다나카_겐이치]] — 일본 육군 강경파
+- [[장태선]] — 일본 공작망의 조선인 파이프 (개항장 부역자, 박의 거울상)
