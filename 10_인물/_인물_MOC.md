@@ -1,5 +1,7 @@
 ---
 type: MOC
+description: "러시아 내각·황실파, 대한제국 정책, 일본 등 세계를 살아가는 등장인물들을 진영별로 모으는 색인."
+modified: 2026-07-07
 tags: [MOC]
 ---
 
@@ -9,7 +11,10 @@ tags: [MOC]
 
 ## 목록
 ```dataview
-TABLE status, file.frontmatter.aliases as "별칭" FROM "10_인물" WHERE type = "인물" SORT file.name
+TABLE status AS "상태", description AS "요약"
+FROM "10_인물"
+WHERE moc = [[_인물_MOC]]
+SORT status ASC, file.name ASC
 ```
 
 ## 수동 색인

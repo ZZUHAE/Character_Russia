@@ -1,5 +1,7 @@
 ---
 type: MOC
+description: "세계관 개요·톤·범위·수치 모델을 모으는 색인. 세계의 전제와 헌법급 설정으로 들어가는 출발점."
+modified: 2026-07-07
 tags: [MOC]
 ---
 
@@ -9,7 +11,10 @@ tags: [MOC]
 
 ## 목록
 ```dataview
-LIST status FROM "00_세계관개요" WHERE type = "세계관개요" SORT file.name
+TABLE status AS "상태", description AS "요약"
+FROM "00_세계관개요"
+WHERE moc = [[_개요_MOC]]
+SORT status ASC, file.name ASC
 ```
 
 ## 수동 색인

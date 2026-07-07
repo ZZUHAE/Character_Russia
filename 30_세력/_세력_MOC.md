@@ -1,5 +1,7 @@
 ---
 type: MOC
+description: "러시아 내정·산업 세력, 대한제국 정파, 일본과 열강 진영 등 국가·조직·가문 집단을 모으는 색인."
+modified: 2026-07-07
 tags: [MOC]
 ---
 
@@ -9,7 +11,10 @@ tags: [MOC]
 
 ## 목록
 ```dataview
-LIST status FROM "30_세력" WHERE type = "세력" SORT file.name
+TABLE status AS "상태", description AS "요약"
+FROM "30_세력"
+WHERE moc = [[_세력_MOC]]
+SORT status ASC, file.name ASC
 ```
 
 ## 수동 색인

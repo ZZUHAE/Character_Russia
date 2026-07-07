@@ -1,5 +1,7 @@
 ---
 type: MOC
+description: "수도·전략 동맥·본토 경제권·변경 자원지대·동아시아 보호국 등 무대가 되는 장소들을 모으는 색인."
+modified: 2026-07-07
 tags: [MOC]
 ---
 
@@ -9,7 +11,10 @@ tags: [MOC]
 
 ## 목록
 ```dataview
-LIST status FROM "20_지역" WHERE type = "지역" SORT file.name
+TABLE status AS "상태", description AS "요약"
+FROM "20_지역"
+WHERE moc = [[_지역_MOC]]
+SORT status ASC, file.name ASC
 ```
 
 ## 수동 색인

@@ -1,5 +1,7 @@
 ---
 type: MOC
+description: "정치 제도·군사·경제산업·사회·조선 정책 등 세계가 돌아가는 규칙과 체제를 모으는 색인."
+modified: 2026-07-07
 tags: [MOC]
 ---
 
@@ -9,7 +11,10 @@ tags: [MOC]
 
 ## 목록
 ```dataview
-LIST status FROM "40_체계" WHERE type = "체계" SORT file.name
+TABLE status AS "상태", description AS "요약"
+FROM "40_체계"
+WHERE moc = [[_체계_MOC]]
+SORT status ASC, file.name ASC
 ```
 
 ## 수동 색인

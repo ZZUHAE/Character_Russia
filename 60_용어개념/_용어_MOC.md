@@ -1,5 +1,7 @@
 ---
 type: MOC
+description: "여성 정치인 부상·혁명 안전판·다민족 제국·인구 구성 등 고유 개념과 용어를 모으는 색인."
+modified: 2026-07-07
 tags: [MOC]
 ---
 
@@ -9,7 +11,10 @@ tags: [MOC]
 
 ## 목록
 ```dataview
-LIST status FROM "60_용어개념" WHERE type = "용어" SORT file.name
+TABLE status AS "상태", description AS "요약"
+FROM "60_용어개념"
+WHERE moc = [[_용어_MOC]]
+SORT status ASC, file.name ASC
 ```
 
 ## 수동 색인

@@ -1,5 +1,7 @@
 ---
 type: MOC
+description: "러일전쟁 승전 분기부터 1915 동부전선까지 세계의 주요 사건을 연대순으로 모으는 색인."
+modified: 2026-07-07
 tags: [MOC]
 ---
 
@@ -9,7 +11,10 @@ tags: [MOC]
 
 ## 연대순 목록
 ```dataview
-TABLE when as "시점", status FROM "50_연표사건" WHERE type = "사건" SORT when ASC
+TABLE status AS "상태", description AS "요약"
+FROM "50_연표사건"
+WHERE moc = [[_연표_MOC]]
+SORT status ASC, file.name ASC
 ```
 
 ## 수동 색인 (연대순)
