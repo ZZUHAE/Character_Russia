@@ -1,0 +1,48 @@
+---
+type: MOC
+tags: [MOC, 집필]
+description: "집필 레이어(80_집필 설계 문서)와 원고(90_원고 회차)의 색인. 회차 진행 현황·스레드·아크를 한 장에서 조망한다."
+modified: 2026-07-11
+---
+
+# ✒️ 집필 MOC
+
+> 소설 레이어의 입구. 헌법: [[_집필_규칙]] · 문체: [[_문체_바이블]] → [[세계관_허브]]
+
+## 설계 문서
+- 규칙: [[_집필_규칙]] · [[_문체_바이블]]
+- 플롯: [[플롯_아웃라인]] · [[작중_타임라인]]
+- 스레드: [[러시아_내정]] · [[동아시아]] · [[동부전선]]
+- 인물 아크: [[_인물_아크_안내]]
+- 원고 규칙: [[_원고_안내]]
+
+## 📖 원고 — 회차 목록
+```dataview
+TABLE status AS "상태", when AS "작중 시점", pov AS "초점", description AS "요약"
+FROM "90_원고"
+WHERE type = "원고"
+SORT file.name ASC
+```
+
+## 📊 집필 현황
+```dataview
+TABLE length(rows) AS "회차 수"
+FROM "90_원고"
+WHERE type = "원고"
+GROUP BY status
+```
+
+## 🧵 스레드 · 아크
+```dataview
+TABLE status AS "상태", description AS "요약"
+FROM "80_집필"
+WHERE type = "집필" AND file.name != "_원고_안내"
+SORT file.folder ASC, file.name ASC
+```
+
+## 🔍 무결성 — description 누락 (비어 있어야 정상)
+```dataview
+LIST
+FROM "80_집필" OR "90_원고"
+WHERE type != "MOC" AND (!description OR description = "")
+```
