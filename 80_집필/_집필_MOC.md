@@ -36,7 +36,7 @@ GROUP BY status
 ```dataview
 TABLE status AS "상태", description AS "요약"
 FROM "80_집필"
-WHERE type = "집필" AND file.name != "_원고_안내"
+WHERE type = "집필"
 SORT file.folder ASC, file.name ASC
 ```
 
