@@ -22,14 +22,18 @@ CATEGORY_MOC = {
 WRITING_FOLDERS = ["80_집필", "90_원고"]  # 하위 폴더 포함 재귀 검사
 WRITING_MOC = "_집필_MOC"
 TYPE_ENUM = {"인물", "지역", "세력", "체계", "사건", "용어", "세계관개요", "수치모델"}
-WRITING_TYPE_ENUM = {"집필", "원고"}
+WRITING_TYPE_ENUM = {"집필", "원고", "인물아크"}
 STATUS_ENUM = {"씨앗", "초안", "구체화", "완성"}
 MANUSCRIPT_STATUS_ENUM = {"구상", "초고", "퇴고", "탈고"}
+ARC_STATUS_ENUM = {"가동", "퇴장", "사망"}       # 인물아크 전용 트랙
+ARC_TIER_ENUM = {"주역", "조연"}
 MOC_DIRS = {v: k for k, v in CATEGORY_MOC.items()}
 MOC_DIRS[WRITING_MOC] = "80_집필"
 REQUIRED = ["type", "status", "description", "tags", "created", "modified", "aliases", "moc"]
+ARC_REQUIRED = REQUIRED + ["character", "tier", "last_ep"]
 MOC_REQUIRED = ["type", "tags", "description", "modified"]
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
+STALE_GAP = 5  # 가동 아크의 last_ep가 최신 확정회차보다 이만큼 이상 뒤지면 위반(1블록)
 
 
 def parse_frontmatter(path):
@@ -42,7 +46,8 @@ def parse_frontmatter(path):
     for line in lines[1:]:
         if line.strip() == "---":
             break
-        m = re.match(r"^([A-Za-z가-힣][A-Za-z가-힣 ]*):(.*)$", line)
+        # 키에 밑줄 허용(last_ep 등)
+        m = re.match(r"^([A-Za-z가-힣_][A-Za-z가-힣_ ]*):(.*)$", line)
         if m:
             fm[m.group(1).strip()] = m.group(2).strip()
     return fm
@@ -52,15 +57,37 @@ def is_quoted(v):
     return len(v) >= 2 and v[0] == '"' and v[-1] == '"'
 
 
-def lint_file(path, folder, expected_moc, writing=False):
+def max_confirmed_ep():
+    """90_원고에서 status가 퇴고/탈고인 NNN화 파일의 최대 회차 번호. 없으면 0."""
+    mx = 0
+    d = "90_원고"
+    if not os.path.isdir(d):
+        return mx
+    for fname in os.listdir(d):
+        m = re.match(r"^(\d+)화_.*\.md$", fname)
+        if not m:
+            continue
+        fm = parse_frontmatter(os.path.join(d, fname))
+        if fm and fm.get("status") in ("퇴고", "탈고"):
+            mx = max(mx, int(m.group(1)))
+    return mx
+
+
+def lint_file(path, folder, expected_moc, writing=False, max_ep=0):
     issues = []
     fname = os.path.basename(path)
     is_moc = bool(re.match(r"^_.*_MOC\.md$", fname))
     fm = parse_frontmatter(path)
     if fm is None:
         return ["frontmatter 블록 없음(--- 로 시작 안 함)"]
+    is_arc = fm.get("type") == "인물아크"
 
-    required = MOC_REQUIRED if is_moc else REQUIRED
+    if is_moc:
+        required = MOC_REQUIRED
+    elif is_arc:
+        required = ARC_REQUIRED
+    else:
+        required = REQUIRED
     for key in required:
         if key not in fm or fm[key] == "":
             issues.append(f"필수 필드 누락: {key}")
@@ -73,10 +100,36 @@ def lint_file(path, folder, expected_moc, writing=False):
         elif fm["type"] not in type_enum:
             issues.append(f"type enum 위반: '{fm['type']}'")
     if not is_moc and "status" in fm:
-        # 원고는 집필 트랙(구상→탈고), 그 외는 설정 트랙(씨앗→완성)
-        status_enum = MANUSCRIPT_STATUS_ENUM if fm.get("type") == "원고" else STATUS_ENUM
+        # 원고=집필트랙(구상→탈고) · 인물아크=아크트랙(가동/퇴장/사망) · 그 외=설정트랙(씨앗→완성)
+        if fm.get("type") == "원고":
+            status_enum = MANUSCRIPT_STATUS_ENUM
+        elif is_arc:
+            status_enum = ARC_STATUS_ENUM
+        else:
+            status_enum = STATUS_ENUM
         if fm["status"] not in status_enum:
             issues.append(f"status enum 위반: '{fm['status']}'")
+
+    # 인물아크 전용 검사 (tier · last_ep · character · stale)
+    if is_arc:
+        if fm.get("tier") and fm["tier"] not in ARC_TIER_ENUM:
+            issues.append(f"tier enum 위반: '{fm['tier']}'")
+        lep = fm.get("last_ep", "")
+        if lep:
+            if not re.match(r"^\d+$", lep.strip()):
+                issues.append(f"last_ep 정수 아님: '{lep}'")
+            elif fm.get("status") == "가동" and max_ep and int(lep) < max_ep - STALE_GAP:
+                issues.append(f"stale: last_ep {lep} < 최신 확정 {max_ep} − {STALE_GAP} (아크 갱신 필요)")
+        cv = fm.get("character", "")
+        if cv:
+            if not is_quoted(cv):
+                issues.append("character 위키링크 따옴표 안 됨")
+            cm = re.search(r"\[\[([^\]|#]+)", cv)
+            ctarget = cm.group(1).strip() if cm else None
+            if not ctarget:
+                issues.append("character 위키링크 파싱 실패")
+            elif not os.path.exists(os.path.join("10_인물", ctarget + ".md")):
+                issues.append(f"character 대상 canon 없음: {ctarget}.md")
 
     if "description" in fm and fm["description"]:
         d = fm["description"]
@@ -117,6 +170,7 @@ def main():
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
+    max_ep = max_confirmed_ep()
     total = ok = 0
     failed = {}
     for folder in CATEGORY_MOC:
@@ -141,12 +195,12 @@ def main():
                     continue
                 path = os.path.join(dirpath, fname)
                 total += 1
-                issues = lint_file(path, dirpath, WRITING_MOC, writing=True)
+                issues = lint_file(path, dirpath, WRITING_MOC, writing=True, max_ep=max_ep)
                 if issues:
                     failed[path] = issues
                 else:
                     ok += 1
-    print(f"검사 {total}개 · 통과 {ok} · 위반 {len(failed)}")
+    print(f"검사 {total}개 · 통과 {ok} · 위반 {len(failed)}  (최신 확정회차 {max_ep})")
     if failed:
         print("-" * 60)
         for path, issues in failed.items():

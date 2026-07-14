@@ -13,7 +13,7 @@ modified: 2026-07-11
 - 규칙: [[_집필_규칙]] · [[_문체_바이블]]
 - 플롯 3층: [[플롯_아웃라인]](큰그림) · [[1부_플롯]](부 블록) · [[작중_타임라인]]
 - 스레드: [[러시아_내정]] · [[동아시아]] · [[동부전선]]
-- 인물 아크: [[_인물_아크_안내]]
+- 인물 아크: [[_인물_아크_안내]] (규칙 v2 · 화약 마스터 목록) · 세계 확정사실: [[집필_확정_사실]]
 - 원고 규칙: [[_원고_안내]]
 
 ## 📖 원고 — 회차 목록
@@ -38,6 +38,15 @@ TABLE status AS "상태", description AS "요약"
 FROM "80_집필"
 WHERE type = "집필"
 SORT file.folder ASC, file.name ASC
+```
+
+## 👥 인물 아크 — stale 감시 (반영 회차 오름차순, 뒤처진 것 위로)
+> 진짜 파수꾼은 lint 하드체크(`last_ep`가 최신 확정회차−5 초과 지연 = 위반). 이 표는 Obsidian판 소프트 감시.
+```dataview
+TABLE character AS "canon", tier AS "급", last_ep AS "반영", status AS "상태", threads AS "스레드"
+FROM "80_집필/인물_아크"
+WHERE type = "인물아크"
+SORT last_ep ASC, tier ASC
 ```
 
 ## 🔍 무결성 — description 누락 (비어 있어야 정상)
