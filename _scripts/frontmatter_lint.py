@@ -34,6 +34,7 @@ ARC_REQUIRED = REQUIRED + ["character", "tier", "last_ep"]
 MOC_REQUIRED = ["type", "tags", "description", "modified"]
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 STALE_GAP = 5  # 가동 아크의 last_ep가 최신 확정회차보다 이만큼 이상 뒤지면 위반(1블록)
+ARC_ORIGINAL_SENTINEL = "원고 인물"  # canon 노트가 없는 원고 창조 인물의 character 값
 
 
 def parse_frontmatter(path):
@@ -124,12 +125,17 @@ def lint_file(path, folder, expected_moc, writing=False, max_ep=0):
         if cv:
             if not is_quoted(cv):
                 issues.append("character 위키링크 따옴표 안 됨")
-            cm = re.search(r"\[\[([^\]|#]+)", cv)
-            ctarget = cm.group(1).strip() if cm else None
-            if not ctarget:
-                issues.append("character 위키링크 파싱 실패")
-            elif not os.path.exists(os.path.join("10_인물", ctarget + ".md")):
-                issues.append(f"character 대상 canon 없음: {ctarget}.md")
+            # 원고가 창조한 인물(canon 노트 없음)은 센티넬 값을 허용한다.
+            # 규칙: _인물_아크_안내 "원고 인물의 아크" 항목 참조.
+            elif cv[1:-1].strip() == ARC_ORIGINAL_SENTINEL:
+                pass
+            else:
+                cm = re.search(r"\[\[([^\]|#]+)", cv)
+                ctarget = cm.group(1).strip() if cm else None
+                if not ctarget:
+                    issues.append("character 위키링크 파싱 실패")
+                elif not os.path.exists(os.path.join("10_인물", ctarget + ".md")):
+                    issues.append(f"character 대상 canon 없음: {ctarget}.md")
 
     if "description" in fm and fm["description"]:
         d = fm["description"]
