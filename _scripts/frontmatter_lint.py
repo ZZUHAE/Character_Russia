@@ -21,13 +21,19 @@ CATEGORY_MOC = {
 }
 WRITING_FOLDERS = ["80_집필", "90_원고"]  # 하위 폴더 포함 재귀 검사
 WRITING_MOC = "_집필_MOC"
+SECOND_ERA_FOLDER = "05_제2기"  # 하위 폴더 포함 재귀 검사 (v3, 2026-08-03)
+SECOND_ERA_MOC = "_제2기_MOC"
 TYPE_ENUM = {"인물", "지역", "세력", "체계", "사건", "용어", "세계관개요", "수치모델"}
 WRITING_TYPE_ENUM = {"집필", "원고"}
+SECOND_ERA_TYPE_ENUM = {"개관", "제도", "부속"}
 STATUS_ENUM = {"씨앗", "초안", "구체화", "완성"}
 MANUSCRIPT_STATUS_ENUM = {"구상", "초고", "퇴고", "탈고"}
+DEPTH_ENUM = {"개관", "표준", "심층"}
 MOC_DIRS = {v: k for k, v in CATEGORY_MOC.items()}
 MOC_DIRS[WRITING_MOC] = "80_집필"
+MOC_DIRS[SECOND_ERA_MOC] = SECOND_ERA_FOLDER
 REQUIRED = ["type", "status", "description", "tags", "created", "modified", "aliases", "moc"]
+SECOND_ERA_REQUIRED = ["epoch", "asof", "depth"]  # REQUIRED에 추가로
 MOC_REQUIRED = ["type", "tags", "description", "modified"]
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
 
@@ -69,7 +75,7 @@ def max_confirmed_ep():
     return mx
 
 
-def lint_file(path, folder, expected_moc, writing=False, max_ep=0):
+def lint_file(path, folder, expected_moc, writing=False, max_ep=0, second_era=False):
     issues = []
     fname = os.path.basename(path)
     is_moc = bool(re.match(r"^_.*_MOC\.md$", fname))
@@ -84,7 +90,23 @@ def lint_file(path, folder, expected_moc, writing=False, max_ep=0):
         if key not in fm or fm[key] == "":
             issues.append(f"필수 필드 누락: {key}")
 
-    type_enum = WRITING_TYPE_ENUM if writing else TYPE_ENUM
+    if second_era and not is_moc:
+        for key in SECOND_ERA_REQUIRED:
+            if key not in fm or fm[key] == "":
+                issues.append(f"제2기 필수 필드 누락: {key}")
+        if fm.get("epoch") and fm["epoch"] != "2":
+            issues.append(f"epoch은 2여야 함: '{fm['epoch']}'")
+        if fm.get("asof") and not re.match(r"^\d{4}$", fm["asof"]):
+            issues.append(f"asof 연도형식(YYYY) 아님: '{fm['asof']}'")
+        if fm.get("depth") and fm["depth"] not in DEPTH_ENUM:
+            issues.append(f"depth enum 위반: '{fm['depth']}'")
+
+    if second_era:
+        type_enum = SECOND_ERA_TYPE_ENUM
+    elif writing:
+        type_enum = WRITING_TYPE_ENUM
+    else:
+        type_enum = TYPE_ENUM
     if "type" in fm:
         if is_moc:
             if fm["type"] != "MOC":
@@ -134,6 +156,42 @@ def lint_file(path, folder, expected_moc, writing=False, max_ep=0):
     return issues
 
 
+def second_era_note_names():
+    """05_제2기 하위 전체 md의 basename(확장자 제외) 집합."""
+    names = set()
+    if not os.path.isdir(SECOND_ERA_FOLDER):
+        return names
+    for dirpath, _dirs, fnames in os.walk(SECOND_ERA_FOLDER):
+        for fname in fnames:
+            if fname.endswith(".md"):
+                names.add(fname[:-3])
+    return names
+
+
+def check_time_reversal(era2_names):
+    """제1기 canon(00~60) 본문이 제2기 노트를 위키링크하면 위반(시간 역행)."""
+    violations = {}
+    if not era2_names:
+        return violations
+    for folder in CATEGORY_MOC:
+        if not os.path.isdir(folder):
+            continue
+        for fname in sorted(os.listdir(folder)):
+            if not fname.endswith(".md"):
+                continue
+            path = os.path.join(folder, fname)
+            with open(path, encoding="utf-8") as fh:
+                text = fh.read()
+            hits = []
+            for m in re.finditer(r"\[\[([^\]|#]+)", text):
+                target = m.group(1).strip()
+                if target in era2_names:
+                    hits.append(target)
+            if hits:
+                violations[path] = [f"시간 역행(1기→2기) 링크: [[{t}]]" for t in sorted(set(hits))]
+    return violations
+
+
 def main():
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -169,6 +227,23 @@ def main():
                     failed[path] = issues
                 else:
                     ok += 1
+    if os.path.isdir(SECOND_ERA_FOLDER):
+        for dirpath, _dirs, fnames in os.walk(SECOND_ERA_FOLDER):
+            for fname in sorted(fnames):
+                if not fname.endswith(".md"):
+                    continue
+                path = os.path.join(dirpath, fname)
+                total += 1
+                issues = lint_file(path, dirpath, SECOND_ERA_MOC, second_era=True)
+                if issues:
+                    failed[path] = issues
+                else:
+                    ok += 1
+    # 시간 역행 검사 (canon 본문 전수 — frontmatter 통과와 별개로 추가 위반 가능)
+    for path, issues in check_time_reversal(second_era_note_names()).items():
+        if path not in failed:
+            ok -= 1  # frontmatter는 통과했지만 본문 위반으로 강등
+        failed.setdefault(path, []).extend(issues)
     print(f"검사 {total}개 · 통과 {ok} · 위반 {len(failed)}  (최신 확정회차 {max_ep})")
     if failed:
         print("-" * 60)
