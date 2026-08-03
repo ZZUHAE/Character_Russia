@@ -56,6 +56,11 @@ TABLE status, depth, description FROM "05_제2기/지방사법" WHERE type != "M
 TABLE status, depth, description FROM "05_제2기/사회" WHERE type != "MOC" SORT file.name
 ```
 
+### 구성국 (개별 프로필)
+```dataview
+TABLE status, depth, description FROM "05_제2기/구성국" WHERE type != "MOC" SORT file.name
+```
+
 ### 부속 자료 (표·명부·조문)
 ```dataview
 TABLE description FROM "05_제2기/_부속" SORT file.name
@@ -75,7 +80,8 @@ TABLE description FROM "05_제2기/_부속" SORT file.name
 | P6 | 지방·사법 | — |
 | P7 | 새 체제와 사회 | — |
 | P8 | 1919~1925 정치 연대기 | — |
-| 확장 | 외교·군·산업·대한제국·문화·일상… | 종착점 없음 |
+| 확장 | 외교·군·산업·문화·일상… | 종착점 없음 |
+| 확장 | **구성국 프로필** | 🔄 착수 — [[한국_왕국]] (민심·황실·체제 전환 4축 설계 완료) |
 
 ## 닫아둔 것
 
