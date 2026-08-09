@@ -17,20 +17,29 @@ modified: 2026-07-11
 - 질감: [[_고증_바이블]] · 세계 확정사실: [[집필_확정_사실]] · 설계 연표: [[전체_연표]]
 - 원고 규칙: [[_원고_안내]]
 
-## 📖 원고 — 회차 목록
+## 📖 1기 「북극성 아래」 — 회차 목록
 ```dataview
 TABLE status AS "상태", when AS "작중 시점", pov AS "초점", description AS "요약"
-FROM "90_원고"
+FROM "90_원고/1기_북극성_아래"
 WHERE type = "원고"
 SORT file.name ASC
 ```
 
-## 📊 집필 현황
+## 📊 1기 집필 현황
 ```dataview
 TABLE length(rows) AS "회차 수"
-FROM "90_원고"
+FROM "90_원고/1기_북극성_아래"
 WHERE type = "원고"
 GROUP BY status
+```
+
+## ✒️ 2기 「원과 루블」 (1925)
+- 설계: [[_작품_규칙]] · [[플롯_아웃라인_원과루블]] · [[인물_명부]] · 원장: [[집필_확정_사실_원과루블]]
+```dataview
+TABLE status AS "상태", when AS "작중 시점", pov AS "초점", description AS "요약"
+FROM "90_원고/2기_원과_루블"
+WHERE type = "원고"
+SORT file.name ASC
 ```
 
 ## 🧵 스레드 · 아크

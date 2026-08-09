@@ -60,9 +60,10 @@ def is_quoted(v):
 
 
 def max_confirmed_ep():
-    """90_원고에서 status가 퇴고/탈고인 NNN화 파일의 최대 회차 번호. 없으면 0."""
+    """1기 원고 폴더에서 status가 퇴고/탈고인 NNN화 파일의 최대 회차 번호. 없으면 0.
+    (90_원고는 작품별 하위 폴더로 나뉨 — 이 카운터는 「북극성 아래」 전용)"""
     mx = 0
-    d = "90_원고"
+    d = os.path.join("90_원고", "1기_북극성_아래")
     if not os.path.isdir(d):
         return mx
     for fname in os.listdir(d):
